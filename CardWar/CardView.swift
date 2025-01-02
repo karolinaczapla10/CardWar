@@ -57,3 +57,4 @@ struct CardView: View {
 #Preview {
     CardView(card: Card(value: 10, suit: "Hearts"))
 }
+ //komen
