@@ -9,53 +9,40 @@
 import SwiftUI
 
 class GameViewModel: ObservableObject {
-    @Published var playerDeck: [Card] = [] //talia gracza
-    @Published var computerDeck: [Card] = [] //talia komputera
-    @Published var playerCard: Card? = nil //aktualne zagrane karty gracza
-    @Published var computerCard: Card? = nil //aktualne zagrane karty komputera
-    @Published var resultMessage = "" // wiadomosc z wynikiem akutalnej rundy
-    @Published var playerWonCards: [Card] = [] // karty wygrane po stronie gracza
-    @Published var computerWonCards: [Card] = [] // karty wygrane po stronie komputera
-    @Published var playerChoices: [Card] = [] // opcje kart dla gracza do wyboru
-    
-    @Published var isGameOver: Bool = false // flaga konca gry
-    @Published var isButtonEnabled: Bool = true // flaga aktywnosci przycisku
-    @Published var timerText: String = "03:00" // tekst odliczania czasu
-    
+    @Published var playerDeck: [Card] = []
+    @Published var computerDeck: [Card] = []
+    @Published var playerCard: Card? = nil
+    @Published var computerCard: Card? = nil
+    @Published var resultMessage = ""
+    @Published var playerWonCards: [Card] = []
+    @Published var computerWonCards: [Card] = []
+    @Published var playerChoices: [Card] = []
+    @Published var isGameOver: Bool = false
+    @Published var isButtonEnabled: Bool = true
+    @Published var timerText: String = "03:00"
     private var model = GameModel()
     private var timer: Timer?
-    private var timeRemaining: Int = 180 // 3 minutes in seconds
-    
-    @Published var isGameStarted = false // Nowa zmienna kontrolująca rozpoczęcie gry
+    private var timeRemaining: Int = 180
+    @Published var isGameStarted = false
 
-    
-    
     init() {
         resetGame()
     }
-    
+
     func playCard(_ card: Card) {
         playerCard = card
-        // Usuń wybraną kartę z listy dostępnych kart
-        if let index = playerChoices.firstIndex(where: { $0.id == card.id }) {
-            playerChoices.remove(at: index)
+        if let index = playerDeck.firstIndex(where: { $0.id == card.id }) {
+            playerDeck.remove(at: index)
         }
-
-        // Losowanie nowych kart po wyborze
         drawChoices()
-        
-        // Zagranie tury
         playTurn()
     }
 
-
-
-    func startGameTimer() { // rozpoczyna odliczanie czasu gry
-        timeRemaining = 180 // reset the timer
+    func startGameTimer() {
+        timeRemaining = 180
         timerText = "03:00"
-        
         timer?.invalidate()
-        isButtonEnabled = true // Enable button when game starts
+        isButtonEnabled = true
 
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             if self.timeRemaining > 0 {
@@ -68,23 +55,25 @@ class GameViewModel: ObservableObject {
             }
         }
     }
-    
+
     private func formatTime(_ time: Int) -> String {
         let minutes = time / 60
         let seconds = time % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
 
-    func playTurn() { // Porównuje karty gracza i komputera, przypisuje zwycięzcy wygrane kart
-        guard !playerDeck.isEmpty, !computerDeck.isEmpty else {
+    func playTurn() {
+        guard let playerCard = self.playerCard else {
+            resultMessage = "Gracz musi wybrać kartę!"
+            return
+        }
+        
+        guard !computerDeck.isEmpty else {
             endGame()
             return
         }
 
-        let playerCard = playerDeck.removeFirst()
         let computerCard = computerDeck.removeFirst()
-
-        self.playerCard = playerCard
         self.computerCard = computerCard
 
         if playerCard.value > computerCard.value {
@@ -99,12 +88,14 @@ class GameViewModel: ObservableObject {
             resultMessage = "Remis!"
         }
 
+        drawChoices()
+
         if playerDeck.isEmpty && computerDeck.isEmpty {
             endGame()
         }
     }
 
-    func endGame() { // Kończy grę, ogłasza zwycięzcę
+    func endGame() {
         isGameOver = true
         isButtonEnabled = false
 
@@ -116,13 +107,12 @@ class GameViewModel: ObservableObject {
             resultMessage = "Gra zakończyła się remisem!"
         }
     }
-    
+
     func drawChoices() {
-        // Jeśli są jeszcze dostępne karty, losuj 3
         if playerDeck.count > 3 {
             playerChoices = Array(playerDeck.prefix(3))
         } else {
-            playerChoices = playerDeck // Jeśli jest mniej niż 3 karty, pokaż wszystkie dostępne
+            playerChoices = playerDeck
         }
     }
 
@@ -151,4 +141,3 @@ class GameViewModel: ObservableObject {
         }
     }
 }
-
