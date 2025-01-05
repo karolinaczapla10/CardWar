@@ -11,6 +11,7 @@
 //
 import SwiftUI
 struct ContentView: View {
+    // Tworzymy obiekt viewModel
     @StateObject private var viewModel = GameViewModel()
 
     var body: some View {
@@ -21,11 +22,13 @@ struct ContentView: View {
 
             HStack {
                 VStack {
+                    // Wyświetlanie karty gracza, jeśli gra została rozpoczęta
                     Text("Gracz")
                         .font(.title)
                     if viewModel.isGameStarted, let card = viewModel.playerCard {
                         CardView(card: card)
                     } else {
+                        // Jeśli gra się nie zaczęła, wyświetl tekst "Brak karty"
                         Text("Brak karty")
                             .opacity(viewModel.isGameStarted ? 0 : 1) // Ukryj tekst przed rozpoczęciem gry
                     }
@@ -49,25 +52,30 @@ struct ContentView: View {
                 }
             }
             .padding()
-
+            // Wyświetlanie komunikatu o wyniku gry
             Text(viewModel.resultMessage)
                 .font(.title2)
                 .padding()
-
+            
+            // Wyświetlanie pozostałego czasu gry
             Text("Pozostały czas: \(viewModel.timerText)")
                 .font(.headline)
                 .padding()
 
-            // Karty wybierane przez gracza
+            // Wybór kart przez gracza, tylko gdy gra została rozpoczęta
             if viewModel.isGameStarted {
                 HStack {
+                    // Pętla do wyświetlania kart gracza, z akcją zagrania karty
                     ForEach(viewModel.playerChoices) { card in
                         CardView(card: card, onCardPlayed: { playedCard in
+                            // Akcja zagrania karty przez gracza
                             viewModel.playCard(playedCard)
 
+                            // Animacja usunięcia wybranych kart po ich zagraniu
                             withAnimation(.easeIn(duration: 0.5)) {
                                 viewModel.playerChoices = [] // Czyszczenie wyboru
                             }
+                            // Losowanie nowych kart po 0.9 sekundy
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
                                 viewModel.drawChoices() // Losowanie nowych kart
                             }
@@ -80,8 +88,10 @@ struct ContentView: View {
                     .foregroundColor(.gray)
             }
 
+            // Przycisk do rozpoczęcia nowej gry
             HStack(spacing: 20) {
                 Button(action: {
+                    // Akcja przycisku - resetowanie gry i rozpoczęcie od nowa
                     viewModel.resetGame()
                     viewModel.startGameTimer()
                     viewModel.resultMessage = "Gra rozpoczęta"  // Zniknięcie napisu po rozpoczęciu nowej gry
@@ -95,17 +105,19 @@ struct ContentView: View {
                 }
             }
         }
+        // Alert, który pojawia się po zakończeniu gry
         .padding()
         .alert("Koniec gry", isPresented: $viewModel.isGameOver) {
                     Button("OK", role: .cancel) {
-                        // After closing the alert, reset the game and show new cards
+                        // Po zamknięciu alertu resetujemy grę i pokazujemy nowe karty
                         viewModel.resetGame()
                         viewModel.startGameTimer()
                         viewModel.resultMessage = "Gra rozpoczęta"
                         viewModel.isGameStarted = true
-                        viewModel.drawChoices() // Draw new cards after alert is closed
+                        viewModel.drawChoices() //Losowanie nowych kart po zamknięciu alertu
                     }
                 } message: {
+                    // Komunikat o wyniku gry (np. "Wygrałeś!" lub "Przegrałeś!")
                     Text(viewModel.resultMessage)
                 }
     }
